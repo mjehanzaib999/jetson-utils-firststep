@@ -19,7 +19,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-
+#include<iostream>
+using namespace std;
 #include "PyCUDA.h"
 
 #include "cudaMappedMemory.h"
@@ -30,6 +31,8 @@
 #include "cudaCrop.h"
 #include "cudaFont.h"
 #include "cudaDraw.h"
+#include "cudaBrightness.h"
+
 
 #include "logging.h"
 
@@ -1293,6 +1296,63 @@ PyObject* PyCUDA_ConvertColor( PyObject* self, PyObject* args, PyObject* kwds )
 
 
 // PyCUDA_Resize
+// PyObject* PyCUDA_Brightness(PyObject* self, int width, int height, int channels, float brightness_factor)
+PyObject* PyCUDA_Brightness( PyObject* self, PyObject* args, PyObject* kwds)
+{	
+	// parse arguments
+	PyObject* pyInput  = NULL;
+	
+
+	float brightnessfactor = 3.1f;
+	int image_width = 1;
+	int image_height = 1;
+	int image_channels = 1;
+	static char* kwlist[] = {"input","width", "height", "channels", "brightness_factor", NULL};
+	
+	// cout<<pyInput<<endl;
+	// cout<<image_width<<endl;
+	// cout<<image_height<<endl;
+	// cout<<image_channels<<endl;
+	// cout<<brightnessfactor<<endl;
+
+	PyArg_ParseTupleAndKeywords(args, kwds, "Oiiif", kwlist, &pyInput, &image_width, &image_height, &image_channels,&brightnessfactor);
+
+	// if( !PyArg_ParseTupleAndKeywords(args, kwds, "Of", kwlist, &pyInput, &brightnessfactor))
+	// 	cout<<"Error in parsing arguments"<<endl;
+	// 	PyErr_SetString(PyExc_Exception, LOG_PY_UTILS "cudaBrightness() arg parser failed!");
+	// 	return NULL;
+
+	// cout<<"After parsing arguments"<<endl;
+	// cout<<pyInput<<endl;
+	// cout<<image_width<<endl;
+	// cout<<image_height<<endl;
+	// cout<<image_channels<<endl;
+	// cout<<brightnessfactor<<endl;
+	// get pointers to image data
+	PyCudaImage* input = PyCUDA_GetImage(pyInput);
+
+	
+	
+	if( !input)
+	{
+		PyErr_SetString(PyExc_Exception, LOG_PY_UTILS "cudaBrightness() failed to get input pointers (should be cudaImage)");
+		return NULL;
+	}
+
+	// run the CUDA function
+	if(CUDA_FAILED(cudaBrightness(input->base.ptr, input->width, input->height, image_width, image_height, image_channels, brightnessfactor, input->format)) )
+	{	
+		cout<<"CUDA function failed"<<endl;
+		PyErr_SetString(PyExc_Exception, LOG_PY_UTILS "cudaBrightness() failed");
+		return NULL;
+	}
+
+	// return void
+	Py_RETURN_NONE;
+}
+
+
+// PyCUDA_Resize
 PyObject* PyCUDA_Resize( PyObject* self, PyObject* args, PyObject* kwds )
 {
 	// parse arguments
@@ -2051,7 +2111,8 @@ static PyMethodDef pyCUDA_Functions[] =
 	{ "cudaMemcpy", (PyCFunction)PyCUDA_Memcpy, METH_VARARGS|METH_KEYWORDS, "Copy src image to dst image (or if dst is not provided, return a new image with the contents of src)" },
 	{ "cudaDeviceSynchronize", (PyCFunction)PyCUDA_DeviceSynchronize, METH_NOARGS, "Wait for the GPU to complete all work" },
 	{ "cudaConvertColor", (PyCFunction)PyCUDA_ConvertColor, METH_VARARGS|METH_KEYWORDS, "Perform colorspace conversion on the GPU" },
-	{ "cudaCrop", (PyCFunction)PyCUDA_Crop, METH_VARARGS|METH_KEYWORDS, "Crop an image on the GPU" },		
+	{ "cudaCrop", (PyCFunction)PyCUDA_Crop, METH_VARARGS|METH_KEYWORDS, "Crop an image on the GPU" },
+	{ "cudaBrightness", (PyCFunction)PyCUDA_Brightness, METH_VARARGS|METH_KEYWORDS, "Increase the brightness of an image" }, 	
 	{ "cudaResize", (PyCFunction)PyCUDA_Resize, METH_VARARGS|METH_KEYWORDS, "Resize an image on the GPU" },
 	{ "cudaNormalize", (PyCFunction)PyCUDA_Normalize, METH_VARARGS|METH_KEYWORDS, "Normalize the pixel intensities of an image between two ranges" },
 	{ "cudaOverlay", (PyCFunction)PyCUDA_Overlay, METH_VARARGS|METH_KEYWORDS, "Overlay the input image onto the composite output image at position (x,y)" },
