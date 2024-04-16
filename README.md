@@ -29,7 +29,7 @@ Documentation for jetson-utils can be found here:
 jetson-utils is typically built as a submodule of [jetson-inference](https://github.com/dusty-nv/jetson-inference), but it can also be compiled/installed standalone:
 
 ``` bash
-git clone https://github.com/dusty-nv/jetson-utils
+git clone https://github.com/mjehanzaib999/jetson-utils-firststep.git
 mkdir build
 cd build
 cmake ../
